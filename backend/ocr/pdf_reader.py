@@ -18,8 +18,8 @@ def process_pdf(pdf_path):
 
     # If very little text → likely scanned
     if len(text.strip()) < 100:
-        print("⚠️ Low text detected → Possibly scanned PDF")
+        print("WARNING: Low text detected - Possibly scanned PDF")
         return None
 
-    print("✅ Text successfully extracted")
+    print("SUCCESS: Text successfully extracted")
     return text

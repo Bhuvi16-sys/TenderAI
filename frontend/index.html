@@ -1,95 +1,464 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Tender Intelligence</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tender Evaluation Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="header">
-    <h1>Tender Intelligence System</h1>
-    <p>AI-powered tender evaluation with explainability</p>
-  </header>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <i data-lucide="shield-check"></i>
+            <span>TenderAI</span>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" id="navDashboard">
+                <i data-lucide="layout-dashboard" class="nav-icon"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" id="navAllTenders">
+                <i data-lucide="file-text" class="nav-icon"></i>
+                <span>All Tenders</span>
+            </a>
+            <a href="#" class="nav-item" id="navBidders">
+                <i data-lucide="users" class="nav-icon"></i>
+                <span>Bidders</span>
+            </a>
+            <a href="#" class="nav-item" id="navAnalytics">
+                <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" id="navSettings">
+                <i data-lucide="settings" class="nav-icon"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <div class="nav-footer" style="padding: 24px;">
+            <a href="#" class="nav-item">
+                <i data-lucide="log-out" class="nav-icon"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
 
-  <!-- MAIN CONTAINER -->
-  <main class="main-container">
-    <!-- UPLOAD SECTION -->
-<section class="upload-section">
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+        
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-title">
+                <h1 id="pageTitle">AI Tender Evaluation Platform</h1>
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; color: #94a3b8;"></i>
+                    <input type="text" placeholder="Search tenders, bidders...">
+                </div>
+                <div class="notifications">
+                    <i data-lucide="bell" style="color: #64748b; cursor: pointer;"></i>
+                </div>
+                <div class="user-profile">
+                    <div class="user-info" style="text-align: right;">
+                        <div id="headerUserName" style="font-size: 14px; font-weight: 600;">James Smith</div>
+                        <div id="headerUserRole" style="font-size: 12px; color: #64748b;">Senior Evaluator</div>
+                    </div>
+                    <div id="headerUserAvatar" class="user-avatar">JS</div>
+                </div>
+            </div>
+        </header>
 
-  <div class="upload-card">
-    <h3>📄 Tender Document</h3>
-    <input type="file" id="tenderFile">
-  </div>
+        <!-- DASHBOARD CONTENT -->
+        <main class="dashboard" id="dashboardView">
+            
+            <!-- TOP STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Bidders Analyzed</div>
+                    <div class="stat-value" id="statTotalBidders">0</div>
+                    <div class="trend-up stat-trend">
+                        <i data-lucide="trending-up" style="width: 14px;"></i>
+                        <span>Active Session</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Eligible Bidders</div>
+                    <div class="stat-value" id="statEligible">0</div>
+                    <div class="stat-trend" style="color: #64748b;">Current Evaluation</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg. AI Confidence Score</div>
+                    <div class="stat-value" id="statConfidence">0%</div>
+                    <div class="stat-trend" style="color: #64748b;">Reliability Metric</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Cases Flagged for Review</div>
+                    <div class="stat-value" id="statFlagged" style="color: var(--warning);">0</div>
+                    <div class="stat-trend" style="color: var(--warning);">Needs Manual Check</div>
+                </div>
+            </div>
 
-  <div class="upload-card">
-    <h3>🏢 Bidder Document</h3>
-    <input type="file" id="bidderFile">
-  </div>
+            <!-- ACTION CARDS (UPLOAD) -->
+            <div class="action-cards">
+                <div class="upload-zone">
+                    <i data-lucide="file-text" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 12px;"></i>
+                    <h3>Tender Document</h3>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Upload official notice (PDF or Image)</p>
+                    <input type="file" id="tenderFile" accept=".pdf,image/*" style="margin-bottom: 12px; font-size: 12px; width: 100%;">
+                    <div id="tenderStatus" style="font-size: 12px; font-weight: 500; color: var(--success);" class="hidden">File Loaded</div>
+                </div>
+                <div class="upload-zone">
+                    <i data-lucide="building-2" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 12px;"></i>
+                    <h3>Bidder Document</h3>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Upload bidder's proposal (PDF or Image)</p>
+                    <input type="file" id="bidderFile" accept=".pdf,image/*" style="margin-bottom: 12px; font-size: 12px; width: 100%;">
+                    <div id="bidderStatus" style="font-size: 12px; font-weight: 500; color: var(--success);" class="hidden">File Loaded</div>
+                </div>
+            </div>
 
-</section>
+            <div class="analyze-container">
+                <button id="analyzeBtn" class="btn-primary">
+                    <i data-lucide="cpu" style="width: 16px; margin-right: 8px; vertical-align: middle;"></i>
+                    Run AI Evaluation
+                </button>
+            </div>
 
-<div class="action">
-  <button id="analyzeBtn">Analyze Tender</button>
-</div>
+            <!-- BIDDER LIST TABLE -->
+            <div class="table-card hidden" id="resultsSection">
+                <div class="table-header">
+                    <h2>Bidder Evaluation Results</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bidder Name</th>
+                            <th>Overall Status</th>
+                            <th>Financial</th>
+                            <th>Technical</th>
+                            <th>AI Confidence</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bidderListBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
 
-<!-- PREVIEW SECTION -->
-<section class="preview-section">
+        </main>
 
-  <div class="preview-card">
-    <h3>📄 Tender Preview</h3>
-    <iframe id="tenderPreview"></iframe>
-  </div>
+        <!-- ANALYTICS CONTENT -->
+        <main class="dashboard hidden" id="analyticsView">
+            <div class="stats-grid">
+                <div class="stat-card" style="grid-column: span 2;">
+                    <div class="stat-label">Financial Comparison (Turnover)</div>
+                    <div style="height: 250px;">
+                        <canvas id="financialChart"></canvas>
+                    </div>
+                </div>
+                <div class="stat-card" style="grid-column: span 2;">
+                    <div class="stat-label">Technical Comparison (Projects)</div>
+                    <div style="height: 250px;">
+                        <canvas id="technicalChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-  <div class="preview-card">
-    <h3>🏢 Bidder Preview</h3>
-    <iframe id="bidderPreview"></iframe>
-  </div>
+            <div class="table-card" style="margin-top: 24px;">
+                <div class="table-header">
+                    <h2>Side-by-Side Comparison</h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr id="comparisonHead">
+                                <th>Criteria</th>
+                                <!-- Bidder names will be added here -->
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonBody">
+                            <!-- Comparison rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
 
-</section>
+        <!-- TENDERS VIEW -->
+        <main class="dashboard hidden" id="tendersView">
+            <div class="table-card">
+                <div class="table-header">
+                    <h2>All Tenders</h2>
+                    <button id="addNewTenderBtn" class="btn-primary" style="padding: 8px 16px;">+ New Tender</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tender ID</th>
+                            <th>Title</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tendersTableBody">
+                        <!-- Will be populated via JS -->
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">
+                                <i data-lucide="file-search" style="width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+                                <p>No tenders uploaded yet. Use the Dashboard to upload your first tender.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
 
-<!-- RESULT HERO -->
-<section class="result-hero hidden" id="resultHero">
+        <!-- BIDDERS VIEW -->
+        <main class="dashboard hidden" id="biddersView">
+            <div class="table-card">
+                <div class="table-header">
+                    <h2>Manage Bidders</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Primary Contact</th>
+                            <th>Projects</th>
+                            <th>Total Revenue</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="biddersTableBody">
+                        <!-- Will be populated via JS -->
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">
+                                <i data-lucide="users" style="width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+                                <p>No bidders analyzed yet. Run an evaluation from the Dashboard.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
 
-  <div class="decision-box">
-    <h2>Final Decision</h2>
-    <div id="finalStatus" class="status-text">—</div>
-  </div>
+        <!-- SETTINGS VIEW -->
+        <main class="dashboard hidden" id="settingsView">
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="stat-card" style="grid-column: span 2;">
+                    <div style="display: flex; align-items: center; gap: 24px;">
+                        <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px;">JS</div>
+                        <div style="flex: 1;">
+                            <h2 style="font-size: 20px; margin-bottom: 4px;">Officer James Smith</h2>
+                            <p style="color: var(--text-muted); font-size: 14px;">Senior Procurement Officer • ID: 88429</p>
+                            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                <button id="changeAvatarBtn" class="btn-primary" style="padding: 6px 16px; font-size: 12px; background: #fff; color: var(--text-main); border: 1px solid var(--border);">Change Avatar</button>
+                                <button id="deleteAccountBtn" class="btn-primary" style="padding: 6px 16px; font-size: 12px; background: #fff; color: var(--danger); border: 1px solid #fee2e2;">Delete Account</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 32px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Full Name</label>
+                            <input type="text" id="profileNameInput" value="James Smith" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Email Address</label>
+                            <input type="email" id="profileEmailInput" value="james.smith@gov.procurement.ai" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Designation</label>
+                            <input type="text" id="profileRoleInput" value="Senior Evaluator" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Department</label>
+                            <input type="text" id="profileDeptInput" value="Technical Evaluation Committee" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                    </div>
+                    <button id="updateProfileBtn" class="btn-primary" style="margin-top: 24px; padding: 10px 32px;">Update Profile</button>
+                </div>
 
-  <div class="summary-box">
-    <h3>🧠 AI Summary</h3>
-    <p id="summaryBox">Waiting for analysis...</p>
-  </div>
+                <div class="stat-card">
+                    <h2 style="font-size: 18px; margin-bottom: 20px;">AI Configuration</h2>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">AI Provider</label>
+                            <select style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                                <option>Google Gemini (Recommended)</option>
+                                <option>OpenAI GPT-4</option>
+                                <option>Anthropic Claude</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">API Key</label>
+                            <input type="password" value="••••••••••••••••" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <button id="saveAiSettingsBtn" class="btn-primary" style="width: 100%;">Save AI Settings</button>
+                    </div>
+                </div>
 
-</section>
+                <div class="stat-card">
+                    <h2 style="font-size: 18px; margin-bottom: 20px;">Thresholds & Rules</h2>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Minimum Confidence Score (%)</label>
+                            <input type="range" min="0" max="100" value="75" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Financial Margin Error (%)</label>
+                            <input type="number" value="5" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" checked id="autoFlag">
+                            <label for="autoFlag" style="font-size: 13px;">Auto-flag documents with OCR errors > 10%</label>
+                        </div>
+                    </div>
+                </div>
 
-<!-- INSIGHTS SECTION -->
-<section class="insights hidden" id="insightsSection">
+                <div class="stat-card">
+                    <h2 style="font-size: 18px; margin-bottom: 20px;">System Preferences</h2>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 14px;">Dark Mode</span>
+                            <div style="width: 40px; height: 20px; background: #cbd5e1; border-radius: 10px; position: relative;">
+                                <div style="width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; left: 2px; top: 2px;"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 14px;">Email Notifications</span>
+                            <div style="width: 40px; height: 20px; background: var(--success); border-radius: 10px; position: relative;">
+                                <div style="width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; right: 2px; top: 2px;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Language</label>
+                            <select style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                                <option>English (US)</option>
+                                <option>Hindi</option>
+                                <option>Spanish</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-  <div class="insight-card">
-    <h3>📊 Confidence Scores</h3>
-    <div id="confidenceBox"></div>
-  </div>
+    <!-- DETAILS MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalBidderName">Detailed Analysis: Apex Corp</h2>
+                <button onclick="closeModal()" style="background: none; border: none; cursor: pointer;">
+                    <i data-lucide="x" style="width: 24px; color: #64748b;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="analysis-grid">
+                    <!-- LEFT COLUMN: Summary & Confidence -->
+                    <div class="analysis-section">
+                        <h4>AI Summary & Insights</h4>
+                        <div class="analysis-card">
+                            <p id="modalSummary" style="font-size: 14px; line-height: 1.6; color: #334155;">-</p>
+                        </div>
+                        
+                        <h4>Confidence Breakdown</h4>
+                        <div id="modalConfidence" class="analysis-card">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT COLUMN: Criteria Verification -->
+                    <div class="analysis-section">
+                        <h4>Criteria Verification</h4>
+                        <div id="modalCriteria" class="analysis-card" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
 
-  <div class="insight-card">
-    <h3>🧾 Audit Trail</h3>
-    <div id="auditBox"></div>
-  </div>
+                <!-- FULL WIDTH: Document Previews -->
+                <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px;">
+                    <h4 style="margin-bottom: 16px; color: var(--text-muted); font-size: 14px;">Document Previews</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div class="preview-container">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span class="preview-label" style="margin-bottom: 0;">Tender Document</span>
+                                <a id="tenderDownload" href="#" target="_blank" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="external-link" style="width: 14px;"></i> View Full
+                                </a>
+                            </div>
+                            <div class="preview-box">
+                                <iframe id="tenderPreview" class="hidden"></iframe>
+                                <img id="tenderImgPreview" class="img-preview hidden">
+                                <div id="tenderNoFile" class="no-file-msg">
+                                    <i data-lucide="file-warning" style="width: 32px; height: 32px; color: #cbd5e1; margin-bottom: 8px;"></i>
+                                    <p>No document available</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-container">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span class="preview-label" style="margin-bottom: 0;">Bidder Document</span>
+                                <a id="bidderDownload" href="#" target="_blank" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="external-link" style="width: 14px;"></i> View Full
+                                </a>
+                            </div>
+                            <div class="preview-box">
+                                <iframe id="bidderPreview" class="hidden"></iframe>
+                                <img id="bidderImgPreview" class="img-preview hidden">
+                                <div id="bidderNoFile" class="no-file-msg">
+                                    <i data-lucide="file-warning" style="width: 32px; height: 32px; color: #cbd5e1; margin-bottom: 8px;"></i>
+                                    <p>No document available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-</section>
+                <!-- FINAL DECISION SECTION -->
+                <div class="analysis-section" style="margin-top: 32px;">
+                    <h4>Final Evaluation Decision</h4>
+                    <div class="analysis-card" style="border-left: 4px solid var(--primary); background: #f0f9ff;">
+                        <div style="font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="user-check" style="width: 18px; color: var(--primary);"></i>
+                            Officer Recommendation
+                        </div>
+                        <textarea placeholder="Enter your evaluation comments here..." style="width: 100%; height: 80px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 16px; resize: none;"></textarea>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn-primary" style="background: var(--success); flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="check-circle" style="width: 16px;"></i> PASS
+                            </button>
+                            <button class="btn-primary" style="background: var(--danger); flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="x-circle" style="width: 16px;"></i> FAIL
+                            </button>
+                            <button class="btn-primary" style="background: var(--warning); flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; color: #1e293b;">
+                                <i data-lucide="alert-triangle" style="width: 16px;"></i> REVIEW
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- DETAILED RESULTS -->
-<section class="results-section hidden" id="resultsSection">
+    <div id="loader" class="hidden"></div>
 
-  <h2>📊 Evaluation Breakdown</h2>
-
-  <div id="resultsContainer"></div>
-
-</section>
-
-  </main>
-<div id="loader" class="hidden"></div>
+    <script src="script.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+        
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+    </script>
 </body>
-<script src="script.js"></script>
 </html>

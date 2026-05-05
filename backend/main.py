@@ -1,15 +1,14 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import shutil
 import os
-from fastapi.middleware.cors import CORSMiddleware
 
-
-from ocr.pdf_reader import process_pdf
+from utils.document_processor import get_document_content
 from utils.text_cleaner import clean_text
 from extraction.bidder_extractor import extract_bidder_info
 from extraction.tender_extractor import extract_tender_criteria
-from utils.normalizer import normalize_bidder_data
-from evaluation.criteria_simplifier import simplify_criteria
 from evaluation.evaluator import evaluate_bidder
 from evaluation.explanation_engine import generate_final_output
 
@@ -17,8 +16,8 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all (for hackathon)
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -26,57 +25,81 @@ app.add_middleware(
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Mount the uploads directory to serve files
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-@app.post("/evaluate")
+@app.post("/analyze")
 async def evaluate(tender: UploadFile = File(...), bidder: UploadFile = File(...)):
-    
-    tender_path = os.path.join(UPLOAD_DIR, tender.filename)
-    bidder_path = os.path.join(UPLOAD_DIR, bidder.filename)
+    try:
+        tender_path = os.path.join(UPLOAD_DIR, tender.filename)
+        bidder_path = os.path.join(UPLOAD_DIR, bidder.filename)
 
-    # Save files
-    with open(tender_path, "wb") as buffer:
-        shutil.copyfileobj(tender.file, buffer)
+        # Save files
+        with open(tender_path, "wb") as buffer:
+            shutil.copyfileobj(tender.file, buffer)
 
-    with open(bidder_path, "wb") as buffer:
-        shutil.copyfileobj(bidder.file, buffer)
+        with open(bidder_path, "wb") as buffer:
+            shutil.copyfileobj(bidder.file, buffer)
 
-    # 🔹 Tender processing
-    tender_text = process_pdf(tender_path)
-    clean_tender = clean_text(tender_text)
-    raw_criteria = extract_tender_criteria(clean_tender)
-    simplified = simplify_criteria(raw_criteria)
+        # 🔹 Tender processing
+        tender_doc = get_document_content(tender_path)
+        if tender_doc["type"] == "text":
+            tender_doc["content"] = clean_text(tender_doc["content"])
+        
+        tender_criteria = extract_tender_criteria(tender_doc) or {}
 
-    # 🔹 Bidder processing
-    bidder_text = process_pdf(bidder_path)
-    clean_bidder = clean_text(bidder_text)
-    bidder_data = extract_bidder_info(clean_bidder)
-    normalized = normalize_bidder_data(bidder_data)
+        # 🔹 Bidder processing
+        bidder_doc = get_document_content(bidder_path)
+        if bidder_doc["type"] == "text":
+            bidder_doc["content"] = clean_text(bidder_doc["content"])
+            
+        bidder_info = extract_bidder_info(bidder_doc) or {}
+        
+        # Ensure company_name is at top level for backward compatibility if needed
+        bidder_name = bidder_info.get("company_name", "Unknown Bidder")
 
-    # 🔹 Evaluation
-    results = evaluate_bidder(normalized, simplified)
+        # 🔹 Evaluation
+        results = evaluate_bidder(bidder_info, tender_criteria)
 
-    final_output = generate_final_output(
-        bidder_name=normalized.get("company_name"),
-        results=results
-    )
+        final_output = generate_final_output(
+            bidder_name=bidder_name,
+            results=results
+        )
 
-    confidence = {
-    "turnover": 0.9 if normalized.get("turnover") else 0.5,
-    "projects": 0.9 if normalized.get("projects_completed") else 0.5,
-    "gst": 1.0 if normalized.get("gst_number") else 0.0,
-    "pan": 1.0 if normalized.get("pan_number") else 0.0
-}
+        # Calculate confidence (simplified)
+        confidence = {
+            "financial": 0.9 if bidder_info.get("financial", {}).get("avg_turnover") else 0.5,
+            "technical": 0.9 if bidder_info.get("technical", {}).get("projects_completed") else 0.5,
+            "compliance": 1.0 if bidder_info.get("compliance", {}).get("gst_number") else 0.0
+        }
 
-    summary = f"""
-    Bidder {normalized.get("company_name")} has been evaluated.
-    Turnover: {results['turnover']['status']}
-    Projects: {results['projects']['status']}
-    Overall: {final_output['final_status']}
-    """
-    return {
-        "criteria": simplified,
-        "bidder": normalized,
-        "result": final_output,
-        "confidence": confidence,
-        "summary": summary
-    }
+        summary = f"""
+        Bidder {bidder_name} has been evaluated.
+        - Financial Status: {final_decision_category(results.get('financial', {}))}
+        - Technical Status: {final_decision_category(results.get('technical', {}))}
+        - Overall Decision: {final_output['final_status']}
+        """
+
+        return {
+            "criteria": tender_criteria,
+            "bidder": bidder_info,
+            "result": final_output,
+            "confidence": confidence,
+            "summary": summary,
+            "files": {
+                "tender": tender.filename,
+                "bidder": bidder.filename
+            }
+        }
+    except Exception as e:
+        import traceback
+        print(f"Error during analysis: {str(e)}")
+        print(traceback.format_exc())
+        return JSONResponse(status_code=500, content={"error": str(e), "status": "error"})
+
+def final_decision_category(category_results):
+    if not category_results: return "N/A"
+    statuses = [v["status"] for v in category_results.values()]
+    if "Not Eligible" in statuses: return "Not Eligible"
+    if "Needs Review" in statuses: return "Needs Review"
+    return "Eligible"
