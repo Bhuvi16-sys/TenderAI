@@ -1,5 +1,5 @@
 // CONFIGURATION
-const API_URL = "http://127.0.0.1:8000/analyze";
+const API_URL = "https://tenderai-backend-g9vx.onrender.com/analyze";
 
 // STATE
 let biddersAnalyzed = [];
@@ -398,8 +398,8 @@ function viewDetails(bidderId) {
 
     // Update previews AFTER modal is shown to ensure correct rendering
     setTimeout(() => {
-        const tenderUrl = data.files ? `http://127.0.0.1:8000/uploads/${data.files.tender}` : null;
-        const bidderUrl = data.files ? `http://127.0.0.1:8000/uploads/${data.files.bidder}` : null;
+        const tenderUrl = data.files ? `https://tenderai-backend-g9vx.onrender.com/uploads/${data.files.tender}` : null;
+        const bidderUrl = data.files ? `https://tenderai-backend-g9vx.onrender.com/uploads/${data.files.bidder}` : null;
         
         updatePreview("tender", tenderUrl);
         updatePreview("bidder", bidderUrl);
