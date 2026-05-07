@@ -81,7 +81,12 @@ The frontend is built with pure HTML, CSS, and JS, so it doesn't require a build
    ```
 3. Open your browser and navigate to `http://localhost:3000`.
 
+
+
 ## Usage
+![Uploading image.png…]()
+![Uploading image.png…]()
+
 
 1. Open the **Dashboard** in the web app.
 2. Under the "Action Cards" section, upload a **Tender Document** and a **Bidder Document**.
