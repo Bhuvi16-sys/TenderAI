@@ -83,13 +83,14 @@ The frontend is built with pure HTML, CSS, and JS, so it doesn't require a build
 
 
 
-## Usage
+## Images
+<img width="1600" height="835" alt="image" src="https://github.com/user-attachments/assets/c373e580-912c-4c0f-8d05-cecc51bdb995" />
+<img width="1600" height="1151" alt="image" src="https://github.com/user-attachments/assets/d6eed6c0-f09b-440c-9385-6a5c9227e0f9" />
 <img width="1600" height="828" alt="image" src="https://github.com/user-attachments/assets/f9a6ebd1-0810-43cf-8809-05ee124be07a" />
-![Uploading image.png…]()
-![Uploading image.png…]()
 
 
 
+## Usage
 1. Open the **Dashboard** in the web app.
 2. Under the "Action Cards" section, upload a **Tender Document** and a **Bidder Document**.
 3. Click **Run AI Evaluation**.
